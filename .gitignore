@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files (không commit dữ liệu lớn)
+*.csv
+!test_data.csv
+
+# Model files (không commit model đã train)
+*.pkl
+
+# Visualization files
+*.png
+*.jpg
+*.jpeg
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+create_test_real_data.py
+
