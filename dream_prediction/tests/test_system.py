@@ -8,17 +8,29 @@ import numpy as np
 import joblib
 import os
 import sys
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import box
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from paths import DATA_DIR, MODELS_DIR
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # Khởi tạo console
 console = Console()
 
 def test_data_generation():
-    """Test generate_data.py"""
+    """Test generate_data_4_classes.py"""
     console.print("\n")
     console.print(Panel.fit(
         "[bold cyan]TEST 1: Data Generation[/bold cyan]",
@@ -26,15 +38,15 @@ def test_data_generation():
     ))
     
     try:
-        from generate_data import generate_dream_data
+        from generate_data_4_classes import generate_dream_data_4_classes
         
         # Test với số lượng mẫu khác nhau
         with console.status("[cyan]Đang test data generation..."):
             for n in [10, 100, 1000]:
-                df = generate_dream_data(n)
+                df = generate_dream_data_4_classes(n)
                 assert len(df) == n, f"Expected {n} samples, got {len(df)}"
                 assert 'dream_type' in df.columns, "Missing dream_type column"
-                assert set(df['dream_type'].unique()).issubset({0, 1, 2}), "Invalid dream_type values"
+                assert set(df['dream_type'].unique()).issubset({0, 1, 2, 3}), "Invalid dream_type values"
                 assert df['dream_type'].isnull().sum() == 0, "Null values in dream_type"
         
         console.print("[green]✓ Data generation: PASSED[/green]")
@@ -52,34 +64,37 @@ def test_model_loading():
     ))
     
     try:
-        if not os.path.exists('best_dream_model.pkl'):
+        if not (MODELS_DIR / 'mo_hinh_tot_nhat_vn.pkl').exists():
             console.print(Panel(
-                "[bold yellow]⚠ Model file not found. Run train_model.py first.[/bold yellow]",
+                "[bold yellow]⚠ Model file not found. Run train_model_vn.py first.[/bold yellow]",
                 border_style="yellow"
             ))
             return False
         
-        if not os.path.exists('scaler.pkl'):
+        if not (MODELS_DIR / 'scaler_vn.pkl').exists():
             console.print(Panel(
-                "[bold yellow]⚠ Scaler file not found. Run train_model.py first.[/bold yellow]",
+                "[bold yellow]⚠ Scaler file not found. Run train_model_vn.py first.[/bold yellow]",
                 border_style="yellow"
             ))
             return False
         
         with console.status("[cyan]Đang load model..."):
-            model = joblib.load('best_dream_model.pkl')
-            scaler = joblib.load('scaler.pkl')
+            model = joblib.load(MODELS_DIR / 'mo_hinh_tot_nhat_vn.pkl')
+            scaler = joblib.load(MODELS_DIR / 'scaler_vn.pkl')
         
         assert model is not None, "Model is None"
         assert scaler is not None, "Scaler is None"
-        assert len(scaler.mean_) == 7, f"Expected 7 features, got {len(scaler.mean_)}"
+        n_features = getattr(scaler, 'n_features_in_', None)
+        if n_features is None:
+            n_features = len(getattr(scaler, 'center_', getattr(scaler, 'mean_', [])))
+        assert n_features == 7, f"Expected 7 features, got {n_features}"
         
         info_table = Table(box=box.SIMPLE, show_header=False)
         info_table.add_column("Metric", style="cyan")
         info_table.add_column("Value", style="green")
         info_table.add_row("Model type", type(model).__name__)
         info_table.add_row("Scaler type", type(scaler).__name__)
-        info_table.add_row("Number of features", str(len(scaler.mean_)))
+        info_table.add_row("Number of features", str(n_features))
         console.print(info_table)
         
         console.print("[green]✓ Model loading: PASSED[/green]")
@@ -98,35 +113,35 @@ def test_prediction_edge_cases():
     
     try:
         with console.status("[cyan]Đang load model..."):
-            model = joblib.load('best_dream_model.pkl')
-            scaler = joblib.load('scaler.pkl')
+            model = joblib.load(MODELS_DIR / 'mo_hinh_tot_nhat_vn.pkl')
+            scaler = joblib.load(MODELS_DIR / 'scaler_vn.pkl')
         
         # Test cases
         test_cases = [
             ("Minimum values", {
-                'age': 18, 'sleep_hours': 4.0, 'stress_level': 0.0,
-                'caffeine_intake': 0, 'exercise_minutes': 0,
-                'sleep_quality': 0.0, 'screen_time': 0.0
+                'tuoi': 18, 'gio_ngu': 4.0, 'muc_stress': 0.0,
+                'caffeine': 0, 'phut_tap_luyen': 0,
+                'chat_luong_ngu': 0.0, 'thoi_gian_man_hinh': 0.0
             }),
             ("Maximum values", {
-                'age': 70, 'sleep_hours': 10.0, 'stress_level': 10.0,
-                'caffeine_intake': 5, 'exercise_minutes': 120,
-                'sleep_quality': 10.0, 'screen_time': 8.0
+                'tuoi': 70, 'gio_ngu': 10.0, 'muc_stress': 10.0,
+                'caffeine': 5, 'phut_tap_luyen': 120,
+                'chat_luong_ngu': 10.0, 'thoi_gian_man_hinh': 8.0
             }),
             ("Average values", {
-                'age': 40, 'sleep_hours': 7.0, 'stress_level': 5.0,
-                'caffeine_intake': 2, 'exercise_minutes': 30,
-                'sleep_quality': 5.0, 'screen_time': 2.0
+                'tuoi': 40, 'gio_ngu': 7.0, 'muc_stress': 5.0,
+                'caffeine': 2, 'phut_tap_luyen': 30,
+                'chat_luong_ngu': 5.0, 'thoi_gian_man_hinh': 2.0
             }),
             ("High stress case", {
-                'age': 30, 'sleep_hours': 5.0, 'stress_level': 9.0,
-                'caffeine_intake': 4, 'exercise_minutes': 10,
-                'sleep_quality': 3.0, 'screen_time': 6.0
+                'tuoi': 30, 'gio_ngu': 5.0, 'muc_stress': 9.0,
+                'caffeine': 4, 'phut_tap_luyen': 10,
+                'chat_luong_ngu': 3.0, 'thoi_gian_man_hinh': 6.0
             }),
             ("Low stress case", {
-                'age': 35, 'sleep_hours': 8.5, 'stress_level': 1.0,
-                'caffeine_intake': 0, 'exercise_minutes': 90,
-                'sleep_quality': 9.0, 'screen_time': 0.5
+                'tuoi': 35, 'gio_ngu': 8.5, 'muc_stress': 1.0,
+                'caffeine': 0, 'phut_tap_luyen': 90,
+                'chat_luong_ngu': 9.0, 'thoi_gian_man_hinh': 0.5
             })
         ]
         
@@ -140,7 +155,7 @@ def test_prediction_edge_cases():
             X_scaled = scaler.transform(df)
             prediction = model.predict(X_scaled)[0]
             
-            assert prediction in [0, 1, 2], f"Invalid prediction: {prediction}"
+            assert prediction in [0, 1, 2, 3], f"Invalid prediction: {prediction}"
             
             # Check probabilities if available
             if hasattr(model, 'predict_proba'):
@@ -148,7 +163,7 @@ def test_prediction_edge_cases():
                 assert abs(sum(proba) - 1.0) < 0.01, "Probabilities don't sum to 1"
                 assert all(0 <= p <= 1 for p in proba), "Invalid probability values"
             
-            dream_labels = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu'}
+            dream_labels = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu', 3: 'Không mơ'}
             results_table.add_row(desc, dream_labels[prediction], "✓")
         
         console.print(results_table)
@@ -171,11 +186,11 @@ def test_data_consistency():
     try:
         # Kiểm tra cả dữ liệu giả định và dữ liệu thật
         data_file = None
-        if os.path.exists('dream_data_real.csv'):
-            data_file = 'dream_data_real.csv'
+        if (DATA_DIR / 'dream_data_real.csv').exists():
+            data_file = DATA_DIR / 'dream_data_real.csv'
             console.print("[dim]Sử dụng dữ liệu thật: dream_data_real.csv[/dim]")
-        elif os.path.exists('dream_data.csv'):
-            data_file = 'dream_data.csv'
+        elif (DATA_DIR / 'dream_data.csv').exists():
+            data_file = DATA_DIR / 'dream_data.csv'
             console.print("[dim]Sử dụng dữ liệu giả định: dream_data.csv[/dim]")
         else:
             console.print(Panel(
@@ -200,7 +215,7 @@ def test_data_consistency():
             assert df['exercise_minutes'].between(0, 120).all(), "Exercise minutes out of range"
             assert df['sleep_quality'].between(0, 10).all(), "Sleep quality out of range"
             assert df['screen_time'].between(0, 8).all(), "Screen time out of range"
-            assert df['dream_type'].isin([0, 1, 2]).all(), "Invalid dream_type"
+            assert df['dream_type'].isin([0, 1, 2, 3]).all(), "Invalid dream_type"
             
             # Kiểm tra missing values
             assert df.isnull().sum().sum() == 0, "Found null values"
@@ -229,7 +244,7 @@ def test_batch_prediction():
     ))
     
     try:
-        if not os.path.exists('test_data.csv'):
+        if not (DATA_DIR / 'test_data.csv').exists():
             console.print(Panel(
                 "[bold yellow]⚠ test_data.csv not found[/bold yellow]",
                 border_style="yellow"
@@ -237,18 +252,29 @@ def test_batch_prediction():
             return False
         
         with console.status("[cyan]Đang test batch prediction..."):
-            model = joblib.load('best_dream_model.pkl')
-            scaler = joblib.load('scaler.pkl')
+            model = joblib.load(MODELS_DIR / 'mo_hinh_tot_nhat_vn.pkl')
+            scaler = joblib.load(MODELS_DIR / 'scaler_vn.pkl')
             
-            df = pd.read_csv('test_data.csv')
+            df = pd.read_csv(DATA_DIR / 'test_data.csv')
             X = df.drop('dream_type', axis=1, errors='ignore')
+            X = X.rename(columns={
+                'age': 'tuoi',
+                'sleep_hours': 'gio_ngu',
+                'stress_level': 'muc_stress',
+                'caffeine_intake': 'caffeine',
+                'exercise_minutes': 'phut_tap_luyen',
+                'sleep_quality': 'chat_luong_ngu',
+                'screen_time': 'thoi_gian_man_hinh'
+            })
+            if (MODELS_DIR / 'ten_dac_trung_vn.pkl').exists():
+                X = X[joblib.load(MODELS_DIR / 'ten_dac_trung_vn.pkl')]
             X_scaled = scaler.transform(X)
             predictions = model.predict(X_scaled)
             
             assert len(predictions) == len(df), "Prediction count mismatch"
-            assert all(p in [0, 1, 2] for p in predictions), "Invalid predictions"
+            assert all(p in [0, 1, 2, 3] for p in predictions), "Invalid predictions"
         
-        dream_labels = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu'}
+        dream_labels = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu', 3: 'Không mơ'}
         results_table = Table(box=box.ROUNDED, show_header=True)
         results_table.add_column("Sample", style="cyan", justify="right")
         results_table.add_column("Prediction", style="green")
@@ -273,12 +299,11 @@ def test_file_outputs():
     ))
     
     files_to_check = [
-        ('dream_data.csv', 'Data file (synthetic)', False),
-        ('dream_data_real.csv', 'Data file (real)', False),
-        ('best_dream_model.pkl', 'Model file', True),
-        ('scaler.pkl', 'Scaler file', True),
-        ('model_comparison.png', 'Comparison chart', False),
-        ('confusion_matrix.png', 'Confusion matrix', False)
+        (DATA_DIR / 'dream_data.csv', 'Data file (synthetic)', False),
+        (DATA_DIR / 'dream_data_real.csv', 'Data file (real)', False),
+        (MODELS_DIR / 'mo_hinh_tot_nhat_vn.pkl', 'Model file', True),
+        (MODELS_DIR / 'scaler_vn.pkl', 'Scaler file', True),
+        (MODELS_DIR / 'ten_dac_trung_vn.pkl', 'Feature names file', True),
     ]
     
     files_table = Table(box=box.ROUNDED, show_header=True)
@@ -289,23 +314,23 @@ def test_file_outputs():
     
     all_exist = True
     for filename, desc, required in files_to_check:
-        exists = os.path.exists(filename)
+        exists = filename.exists()
         if exists:
-            size = os.path.getsize(filename)
-            files_table.add_row(filename, desc, "✓", f"{size:,} bytes")
+            size = filename.stat().st_size
+            files_table.add_row(str(filename.relative_to(PROJECT_ROOT)), desc, "✓", f"{size:,} bytes")
         else:
-            if filename.endswith('.png') or not required:
+            if filename.suffix == '.png' or not required:
                 # PNG files và data files là optional (có thể có 1 trong 2)
-                if 'dream_data' in filename:
-                    files_table.add_row(filename, desc, "⚠", "Optional")
+                if 'dream_data' in filename.name:
+                    files_table.add_row(str(filename.relative_to(PROJECT_ROOT)), desc, "⚠", "Optional")
                 else:
-                    files_table.add_row(filename, desc, "⚠", "Optional")
+                    files_table.add_row(str(filename.relative_to(PROJECT_ROOT)), desc, "⚠", "Optional")
             else:
-                files_table.add_row(filename, desc, "✗", "Missing")
+                files_table.add_row(str(filename.relative_to(PROJECT_ROOT)), desc, "✗", "Missing")
                 all_exist = False
     
     # Kiểm tra ít nhất 1 data file tồn tại
-    has_data = os.path.exists('dream_data.csv') or os.path.exists('dream_data_real.csv')
+    has_data = (DATA_DIR / 'dream_data.csv').exists() or (DATA_DIR / 'dream_data_real.csv').exists()
     if not has_data:
         all_exist = False
     

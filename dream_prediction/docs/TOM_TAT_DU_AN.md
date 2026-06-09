@@ -1,4 +1,4 @@
-# 🎉 TÓM TẮT DỰ ÁN - DỰ ĐOÁN GIẤC MƠ TIẾNG VIỆT
+﻿# 🎉 TÓM TẮT DỰ ÁN - DỰ ĐOÁN GIẤC MƠ TIẾNG VIỆT
 
 ## ✅ Đã hoàn thành
 
@@ -13,7 +13,7 @@
   - `phut_tap_luyen` - Phút tập luyện
   - `chat_luong_ngu` - Chất lượng ngủ
   - `thoi_gian_man_hinh` - Thời gian màn hình
-  - `loai_giac_mo` - Loại giấc mơ (0: Ác mộng, 1: Mơ đẹp, 2: Ngủ sâu)
+  - `loai_giac_mo` - Loại giấc mơ (0: Ác mộng, 1: Mơ đẹp, 2: Ngủ sâu, 3: Không mơ)
 
 #### 2. **Scripts Python**
 - ✅ `train_model_vn.py` - **Script huấn luyện NÂNG CAO**
@@ -92,10 +92,10 @@
    - Learning from previous errors
    - Accuracy: ~75-77%
 
-3. **SVM (RBF Kernel)** ⭐⭐⭐ BEST
+3. **Neural Network (MLP)** ⭐⭐⭐ BEST
    - Support vector machine
    - Kernel trick for non-linear separation
-   - Accuracy: ~76-78%
+   - Accuracy: ~94%
 
 4. **Logistic Regression**
    - Linear baseline model
@@ -164,9 +164,9 @@
 
 ### So sánh độ chính xác
 ```
-1. SVM (RBF)           ⭐⭐⭐ 76-78%  [BEST]
-2. Gradient Boosting   ⭐⭐⭐ 75-77%
-3. Random Forest       ⭐⭐⭐ 75-77%
+1. Neural Network (MLP) ⭐⭐⭐ 94%     [BEST]
+2. SVM (RBF)           ⭐⭐⭐ 92%
+3. Gradient Boosting   ⭐⭐⭐ 91%
 4. Voting Ensemble     ⭐⭐⭐ 75-77%
 5. Logistic Regression ⭐⭐   70-72%
 6. Neural Network      ⭐⭐   70-72%
@@ -198,7 +198,7 @@
 
 ### 1. Huấn luyện mô hình
 ```bash
-python train_model_vn.py
+python src/train_model_vn.py
 ```
 **Output:**
 - Mô hình tốt nhất: `mo_hinh_tot_nhat_vn.pkl`
@@ -208,7 +208,7 @@ python train_model_vn.py
 
 ### 2. Dự đoán
 ```bash
-python predict_vn.py
+python src/predict_vn.py
 ```
 **Chức năng:**
 - 5 chế độ dự đoán (thủ công, mẫu, random)
@@ -343,7 +343,7 @@ python ml_guide_vn.py
 5. ✅ **Interactive UI** - Rich library, user-friendly
 6. ✅ **Tài liệu đầy đủ** - README, guide, docstrings
 7. ✅ **Phân tích sâu** - Feature selection, correlation, importance
-8. ✅ **Kết quả tốt** - Accuracy 76-78% với SVM
+8. ✅ **Kết quả tốt** - Accuracy khoảng 94% với Neural Network (MLP)
 
 ### Điểm cần cải thiện
 - ⚠️ Có thể thêm Deep Learning
@@ -364,7 +364,7 @@ python ml_guide_vn.py
 - ✅ Code chất lượng cao
 - ✅ Interactive UI
 
-**Độ chính xác đạt được: 76-78%** với SVM (RBF kernel) - một kết quả rất tốt cho bài toán phân loại 3 lớp!
+**Độ chính xác đạt được: khoảng 94%** với Neural Network (MLP) trên bài toán phân loại 4 lớp.
 
 ---
 
@@ -377,3 +377,4 @@ python ml_guide_vn.py
 Mọi đóng góp đều được chào đón! Hãy tạo pull request hoặc mở issue.
 
 **Created with ❤️ using Python & Machine Learning**
+

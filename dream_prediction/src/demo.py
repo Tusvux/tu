@@ -1,4 +1,4 @@
-"""
+﻿"""
 Demo nhanh - Kiểm tra toàn bộ hệ thống
 """
 
@@ -8,8 +8,15 @@ from rich.table import Table
 from rich import box
 import os
 import sys
+from pathlib import Path
 
 console = Console()
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / "src"
+DATA_DIR = PROJECT_ROOT / "data"
+MODELS_DIR = PROJECT_ROOT / "models"
+DOCS_DIR = PROJECT_ROOT / "docs"
 
 def check_files():
     """Kiểm tra các files quan trọng"""
@@ -23,30 +30,30 @@ def check_files():
     
     required_files = {
         "Scripts": [
-            "train_model_vn.py",
-            "predict_vn.py",
-            "ml_guide_vn.py"
+            SRC_DIR / "train_model_vn.py",
+            SRC_DIR / "predict_vn.py",
+            SRC_DIR / "ml_guide_vn.py"
         ],
         "Dữ liệu": [
-            "dream_data.csv",
-            "dream_data_vn.csv"
+            DATA_DIR / "dream_data.csv",
+            DATA_DIR / "dream_data_vn.csv"
         ],
         "Tài liệu": [
-            "README_VN.md",
-            "TOM_TAT_DU_AN.md"
+            DOCS_DIR / "README_VN.md",
+            DOCS_DIR / "TOM_TAT_DU_AN.md"
         ],
         "Models (sau khi train)": [
-            "mo_hinh_tot_nhat_vn.pkl",
-            "scaler_vn.pkl"
+            MODELS_DIR / "mo_hinh_tot_nhat_vn.pkl",
+            MODELS_DIR / "scaler_vn.pkl"
         ]
     }
     
     for category, files in required_files.items():
         console.print(f"\n[bold yellow]{category}:[/bold yellow]")
         for file in files:
-            exists = os.path.exists(file)
+            exists = file.exists()
             status = "[green]✓[/green]" if exists else "[red]✗[/red]"
-            console.print(f"  {status} {file}")
+            console.print(f"  {status} {file.relative_to(PROJECT_ROOT)}")
 
 def show_quick_stats():
     """Hiển thị thống kê nhanh"""
@@ -63,15 +70,15 @@ def show_quick_stats():
     
     # Đếm số dòng code
     total_lines = 0
-    for file in ["train_model_vn.py", "predict_vn.py", "ml_guide_vn.py"]:
-        if os.path.exists(file):
+    for file in [SRC_DIR / "train_model_vn.py", SRC_DIR / "predict_vn.py", SRC_DIR / "ml_guide_vn.py"]:
+        if file.exists():
             with open(file, 'r', encoding='utf-8') as f:
                 total_lines += len(f.readlines())
     
     stats_table.add_row("Tổng số dòng code", f"{total_lines:,}")
     stats_table.add_row("Số thuật toán ML", "9+")
     stats_table.add_row("Số biểu đồ phân tích", "9+")
-    stats_table.add_row("Độ chính xác đạt được", "76-78%")
+    stats_table.add_row("Độ chính xác đạt được", "~94%")
     stats_table.add_row("Ngôn ngữ", "100% Tiếng Việt")
     
     console.print("\n")
@@ -125,11 +132,11 @@ def show_usage():
         "[bold cyan]📚 HƯỚNG DẪN SỬ DỤNG[/bold cyan]\n\n"
         
         "[bold yellow]1. Huấn luyện mô hình:[/bold yellow]\n"
-        "   [dim]python train_model_vn.py[/dim]\n"
+        "   [dim]python src/train_model_vn.py[/dim]\n"
         "   → Tạo mô hình, scaler, và các biểu đồ phân tích\n\n"
         
         "[bold yellow]2. Dự đoán:[/bold yellow]\n"
-        "   [dim]python predict_vn.py[/dim]\n"
+        "   [dim]python src/predict_vn.py[/dim]\n"
         "   → Dự đoán loại giấc mơ với 5 chế độ\n\n"
         
         "[bold yellow]3. Xem hướng dẫn ML:[/bold yellow]\n"
@@ -160,7 +167,7 @@ def show_ml_algorithms():
     algo_table.add_column("Accuracy", style="green", width=15)
     
     algorithms = [
-        ("1", "SVM (RBF Kernel)", "Kernel-based", "⭐⭐⭐ 76-78%"),
+        ("1", "Neural Network (MLP)", "Neural network", "⭐⭐⭐ ~94%"),
         ("2", "Random Forest", "Ensemble", "⭐⭐⭐ 75-77%"),
         ("3", "Gradient Boosting", "Boosting", "⭐⭐⭐ 75-77%"),
         ("4", "Voting Ensemble", "Ensemble", "⭐⭐⭐ 75-77%"),
@@ -213,7 +220,7 @@ def main():
         box=box.DOUBLE
     ))
     
-    console.print("\n[bold cyan]💡 Tip:[/bold cyan] Bắt đầu bằng [yellow]python train_model_vn.py[/yellow]\n")
+    console.print("\n[bold cyan]💡 Tip:[/bold cyan] Bắt đầu bằng [yellow]python src/train_model_vn.py[/yellow]\n")
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-# 🌙 Hướng Dẫn Sử Dụng - Dự Đoán Giấc Mơ bằng Machine Learning
+﻿# 🌙 Hướng Dẫn Sử Dụng - Dự Đoán Giấc Mơ bằng Machine Learning
 
 **Version:** 2.0  
 **Cập nhật:** 2025-12-05
@@ -118,39 +118,39 @@ Script này tự động:
 
 ```bash
 # Bước 1: Tạo dữ liệu
-python generate_data.py
+python src/generate_data_4_classes.py
 
 # Bước 2: Huấn luyện mô hình
-python train_model.py
+python src/train_model_vn.py
 
 # Bước 3: Dự đoán
-python predict.py
+python src/predict_vn.py
 ```
 
 #### Với Dữ Liệu Thật (Production)
 
 ```bash
 # Bước 1: Tải dữ liệu từ Kaggle (xem phần "Tải Dữ Liệu Thật")
-python load_real_data.py
+python src/load_real_data.py
 
 # Bước 2: Huấn luyện (tự động dùng dữ liệu thật)
-python train_model.py
+python src/train_model_vn.py
 
 # Bước 3: Dự đoán
-python predict.py
+python src/predict_vn.py
 ```
 
 ---
 
 ## 📚 Hướng Dẫn Chi Tiết
 
-### 1. Tạo Dữ Liệu (generate_data.py)
+### 1. Tạo Dữ Liệu (generate_data_4_classes.py)
 
 **Mục đích:** Tạo dữ liệu giả định để demo và học tập
 
 **Cách chạy:**
 ```bash
-python generate_data.py
+python src/generate_data_4_classes.py
 ```
 
 **Kết quả:**
@@ -162,13 +162,13 @@ python generate_data.py
 - Số mẫu: 1000
 - Phân bố: Ác mộng (~21%), Mơ đẹp (~47%), Ngủ sâu (~31%)
 
-### 2. Huấn Luyện Mô Hình (train_model.py)
+### 2. Huấn Luyện Mô Hình (train_model_vn.py)
 
 **Mục đích:** Huấn luyện và so sánh 9 thuật toán ML
 
 **Cách chạy:**
 ```bash
-python train_model.py
+python src/train_model_vn.py
 ```
 
 **Tính năng:**
@@ -183,20 +183,20 @@ python train_model.py
   - `feature_importance.png` - Tầm quan trọng đặc trưng (nếu mô hình hỗ trợ)
 
 **Output:**
-- `best_dream_model.pkl` - Mô hình tốt nhất
-- `scaler.pkl` - Scaler để chuẩn hóa dữ liệu
+- `mo_hinh_tot_nhat_vn.pkl` - Mô hình tốt nhất
+- `scaler_vn.pkl` - Scaler để chuẩn hóa dữ liệu
 
 **Kết quả mẫu:**
 - SVM: 82.5% accuracy (với dữ liệu giả định)
 - Logistic Regression: 97.5% accuracy (với dữ liệu thật)
 
-### 3. Dự Đoán (predict.py)
+### 3. Dự Đoán (predict_vn.py)
 
 **Mục đích:** Dự đoán loại giấc mơ cho người dùng mới
 
 **Cách chạy:**
 ```bash
-python predict.py
+python src/predict_vn.py
 ```
 
 **Chế độ 1: Dự đoán đơn lẻ**
@@ -238,7 +238,7 @@ age,sleep_hours,stress_level,caffeine_intake,exercise_minutes,sleep_quality,scre
 
 #### Bước 1: Chạy script hướng dẫn
 ```bash
-python load_real_data.py
+python src/load_real_data.py
 ```
 
 #### Bước 2: Tải dataset từ Kaggle
@@ -256,7 +256,7 @@ mv ~/Downloads/Sleep_health_and_lifestyle_dataset.csv sleep_health_lifestyle.csv
 
 #### Bước 4: Xử lý dữ liệu
 ```bash
-python load_real_data.py
+python src/load_real_data.py
 ```
 
 **Kết quả:** File `dream_data_real.csv` được tạo với ~400 mẫu dữ liệu thật!
@@ -289,7 +289,7 @@ Script sẽ:
 
 #### Bước 4: Xử Lý Dữ Liệu
 ```bash
-python load_real_data.py
+python src/load_real_data.py
 ```
 
 ### Các Nguồn Dữ Liệu Khác
@@ -314,23 +314,23 @@ python load_real_data.py
 
 ```
 dream_prediction/
-├── generate_data.py          # Tạo dữ liệu giả định
+├── generate_data_4_classes.py          # Tạo dữ liệu giả định
 ├── load_real_data.py         # Tải và xử lý dữ liệu thật
 ├── auto_download_kaggle.py   # Tự động tải từ Kaggle API
-├── train_model.py            # Huấn luyện mô hình
-├── predict.py                # Dự đoán
+├── train_model_vn.py            # Huấn luyện mô hình
+├── predict_vn.py                # Dự đoán
 ├── run_all.py                # Master script (chạy tất cả)
 ├── test_system.py            # Script test toàn diện
 ├── create_real_data_sample.py # Tạo dữ liệu thật mẫu
 ├── requirements.txt          # Dependencies
 ├── GUIDE.md                  # Hướng dẫn này (file duy nhất)
 │
-├── dream_data.csv           # Dữ liệu giả định (sau khi chạy generate_data.py)
+├── dream_data.csv           # Dữ liệu giả định (sau khi chạy generate_data_4_classes.py)
 ├── dream_data_real.csv      # Dữ liệu thật (sau khi chạy load_real_data.py)
 ├── sleep_health_lifestyle.csv # Dữ liệu gốc từ Kaggle
 │
-├── best_dream_model.pkl     # Mô hình tốt nhất (sau khi train)
-├── scaler.pkl               # Scaler (sau khi train)
+├── mo_hinh_tot_nhat_vn.pkl     # Mô hình tốt nhất (sau khi train)
+├── scaler_vn.pkl               # Scaler (sau khi train)
 │
 ├── model_comparison.png     # Biểu đồ so sánh (sau khi train)
 ├── confusion_matrix.png     # Confusion matrix (sau khi train)
@@ -348,14 +348,14 @@ dream_prediction/
 
 ### Thay Đổi Số Lượng Dữ Liệu
 
-Trong `generate_data.py`:
+Trong `generate_data_4_classes.py`:
 ```python
 df = generate_dream_data(2000)  # Thay vì 1000
 ```
 
 ### Thay Đổi Tham Số Mô Hình
 
-Trong `train_model.py`, sửa các tham số:
+Trong `train_model_vn.py`, sửa các tham số:
 ```python
 'Random Forest': RandomForestClassifier(
     n_estimators=200,  # Tăng số cây
@@ -378,7 +378,7 @@ Trong `train_model.py`, sửa các tham số:
 
 Chạy script test toàn diện:
 ```bash
-python test_system.py
+python tests/test_system.py
 ```
 
 Script sẽ kiểm tra:
@@ -400,12 +400,12 @@ Script sẽ kiểm tra:
 pip install rich colorama
 ```
 
-### Lỗi: "File not found: best_dream_model.pkl"
+### Lỗi: "File not found: mo_hinh_tot_nhat_vn.pkl"
 
 **Giải pháp:**
 ```bash
-# Chạy train_model.py trước
-python train_model.py
+# Chạy train_model_vn.py trước
+python src/train_model_vn.py
 ```
 
 ### Lỗi: "Kaggle credentials not found"
@@ -511,7 +511,7 @@ Dataset có thể có tên cột khác. Chỉnh sửa `load_real_data.py`:
 ### Ví Dụ 1: Dự Đoán Cho 1 Người
 
 ```bash
-python predict.py
+python src/predict_vn.py
 # Chọn option 1
 # Nhập:
 Tuổi: 25
@@ -542,7 +542,7 @@ age,sleep_hours,stress_level,caffeine_intake,exercise_minutes,sleep_quality,scre
 
 Chạy:
 ```bash
-python predict.py
+python src/predict_vn.py
 # Chọn option 2
 # Nhập: test_data.csv
 ```
@@ -597,9 +597,9 @@ Dự án tạo ra các biểu đồ đẹp mắt:
 
 ### Cho Người Dùng Mới
 1. ✅ Cài đặt dependencies
-2. ✅ Chạy `generate_data.py` để tạo dữ liệu demo
-3. ✅ Chạy `train_model.py` để huấn luyện
-4. ✅ Chạy `predict.py` để dự đoán
+2. ✅ Chạy `generate_data_4_classes.py` để tạo dữ liệu demo
+3. ✅ Chạy `train_model_vn.py` để huấn luyện
+4. ✅ Chạy `predict_vn.py` để dự đoán
 5. 📥 Tải dữ liệu thật từ Kaggle
 6. 🔄 Huấn luyện lại với dữ liệu thật
 7. 📊 So sánh kết quả
@@ -641,4 +641,5 @@ Dự án Machine Learning - Dự đoán Giấc Mơ
 ---
 
 **Chúc bạn có những giấc mơ đẹp! 🌙✨**
+
 

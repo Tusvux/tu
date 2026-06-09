@@ -1,4 +1,4 @@
-# 🌙 DỰ ĐOÁN GIẤC MƠ - PHIÊN BẢN TIẾNG VIỆT
+﻿# 🌙 DỰ ĐOÁN GIẤC MƠ - PHIÊN BẢN TIẾNG VIỆT
 
 ## 📝 Giới thiệu
 
@@ -119,7 +119,7 @@ pip install pandas numpy scikit-learn matplotlib seaborn rich joblib scipy
 ### 1. Huấn luyện mô hình (Training)
 
 ```bash
-python train_model_vn.py
+python src/train_model_vn.py
 ```
 
 **Quá trình huấn luyện bao gồm:**
@@ -145,7 +145,7 @@ python train_model_vn.py
 ### 2. Dự đoán (Prediction)
 
 ```bash
-python predict_vn.py
+python src/predict_vn.py
 ```
 
 **Chức năng:**
@@ -167,12 +167,12 @@ python predict_vn.py
 
 | Thuật toán | Accuracy | Đặc điểm |
 |-----------|----------|----------|
-| **SVM (RBF)** | ~76-78% | ⭐ Tốt nhất, robust với nhiễu |
-| Random Forest | ~75-77% | Tốt, dễ giải thích |
-| Gradient Boosting | ~75-77% | Tốt, chậm hơn RF |
-| Voting Ensemble | ~75-77% | Ổn định, kết hợp nhiều mô hình |
+| **Neural Network (MLP)** | ~94% | ⭐ Tốt nhất trên lần train hiện tại |
+| SVM (RBF) | ~92% | Mạnh với quan hệ phi tuyến |
+| Gradient Boosting | ~91% | Tốt, có feature importance |
+| Random Forest | ~88% | Tốt, dễ giải thích |
 | Logistic Regression | ~70-72% | Nhanh, đơn giản |
-| Neural Network | ~70-72% | Cần nhiều dữ liệu hơn |
+| Logistic Regression | baseline | Nhanh, đơn giản |
 | KNN | ~65-70% | Đơn giản nhưng chậm |
 
 ### Đặc trưng quan trọng (Feature Importance)
@@ -297,3 +297,4 @@ MIT License
 ---
 
 **Chúc bạn có những giấc ngủ ngon! 😴🌙✨**
+

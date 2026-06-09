@@ -12,14 +12,20 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import box
 from rich.prompt import Prompt, FloatPrompt, IntPrompt
+from paths import MODELS_DIR
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 console = Console()
 
-DREAM_LABELS = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu'}
+DREAM_LABELS = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu', 3: 'Không mơ'}
 DREAM_DESCRIPTIONS = {
     0: '😱 Bạn có nguy cơ gặp ác mộng. Hãy giảm stress và cải thiện chất lượng ngủ!',
     1: '😊 Bạn sẽ có giấc ngủ ngon với những giấc mơ đẹp!',
-    2: '😴 Bạn sẽ ngủ rất sâu và nghỉ ngơi hiệu quả!'
+    2: '😴 Bạn sẽ ngủ rất sâu và nghỉ ngơi hiệu quả!',
+    3: '🌙 Bạn có xu hướng không ghi nhớ giấc mơ rõ ràng sau khi thức dậy.'
 }
 
 FEATURE_INFO = {
@@ -35,13 +41,13 @@ FEATURE_INFO = {
 def load_model():
     """Tải mô hình đã huấn luyện"""
     try:
-        model = joblib.load('mo_hinh_tot_nhat_vn.pkl')
-        scaler = joblib.load('scaler_vn.pkl')
+        model = joblib.load(MODELS_DIR / 'mo_hinh_tot_nhat_vn.pkl')
+        scaler = joblib.load(MODELS_DIR / 'scaler_vn.pkl')
         console.print("[green]✓[/green] Đã tải mô hình thành công!")
         return model, scaler
     except FileNotFoundError:
         console.print("[red]✗[/red] Không tìm thấy file mô hình!")
-        console.print("[yellow]💡 Hãy chạy 'python train_model_vn.py' trước![/yellow]")
+        console.print("[yellow]💡 Hãy chạy 'python src/train_model_vn.py' trước![/yellow]")
         sys.exit(1)
 
 def get_user_input_interactive():
@@ -123,6 +129,12 @@ def get_sample_data(sample_type='random'):
 
 def predict(model, scaler, data):
     """Thực hiện dự đoán"""
+
+    try:
+        feature_names = joblib.load(MODELS_DIR / 'ten_dac_trung_vn.pkl')
+        data = data[feature_names]
+    except FileNotFoundError:
+        pass
     
     # Chuẩn hóa dữ liệu
     data_scaled = scaler.transform(data)
@@ -132,7 +144,12 @@ def predict(model, scaler, data):
     
     # Dự đoán xác suất (nếu có)
     if hasattr(model, 'predict_proba'):
-        probabilities = model.predict_proba(data_scaled)[0]
+        raw_probabilities = model.predict_proba(data_scaled)[0]
+        class_ids = getattr(model, 'classes_', list(DREAM_LABELS.keys()))
+        probabilities = {
+            int(class_id): float(prob)
+            for class_id, prob in zip(class_ids, raw_probabilities)
+        }
     else:
         probabilities = None
     
@@ -179,7 +196,7 @@ def display_results(data, prediction, probabilities):
         prob_table.add_column("Biểu đồ", style="yellow")
         
         for label_id, label_name in DREAM_LABELS.items():
-            prob = probabilities[label_id]
+            prob = probabilities.get(label_id, 0.0)
             bar_length = int(prob * 30)
             bar = "█" * bar_length + "░" * (30 - bar_length)
             

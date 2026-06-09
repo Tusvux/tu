@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 
-dream_counts = df['loai_giac_mo'].value_counts()
-print("\n--- PHÂN BỐ NHÃN (LABEL DISTRIBUTION) ---")
-print(dream_counts)
-
-percentage = (dream_counts / len(df)) * 100
-print(percentage)
-
 import os
 import sys
 import subprocess
@@ -164,9 +157,9 @@ def main():
         print("=" * 70)
         
         print("\n📊 Bước tiếp theo:")
-        print("  1. Chạy: python load_real_data.py")
+        print("  1. Chạy: python src/load_real_data.py")
         print("     (Xử lý dữ liệu và tạo dream_data_real.csv)")
-        print("\n  2. Chạy: python train_model.py")
+        print("\n  2. Chạy: python src/train_model_vn.py")
         print("     (Huấn luyện với dữ liệu thật)")
         
     else:
@@ -179,7 +172,7 @@ def main():
         print("     https://www.kaggle.com/datasets/uom190346a/sleep-health-and-lifestyle-dataset")
         print("\n  2. Đặt file CSV vào thư mục này với tên:")
         print("     sleep_health_lifestyle.csv")
-        print("\n  3. Chạy: python load_real_data.py")
+        print("\n  3. Chạy: python src/load_real_data.py")
 
 if __name__ == "__main__":
     main()

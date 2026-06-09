@@ -6,12 +6,18 @@ Nhãn: 0 = Ác mộng, 1 = Mơ đẹp, 2 = Ngủ sâu, 3 = Không mơ
 
 import pandas as pd
 import numpy as np
+import sys
 from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 from rich.panel import Panel
 from rich import box
+from paths import DATA_DIR, ensure_project_dirs
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 console = Console()
 np.random.seed(42)
@@ -121,6 +127,7 @@ def generate_dream_data_4_classes(n_samples=5000):
     return pd.DataFrame(data)
 
 if __name__ == "__main__":
+    ensure_project_dirs()
     console.print("\n")
     console.print(Panel.fit(
         "[bold cyan]DREAM PREDICTION DATA GENERATOR - 4 CLASSES[/bold cyan]\n"
@@ -134,8 +141,8 @@ if __name__ == "__main__":
     
     # Lưu dữ liệu
     with console.status("[bold green]Đang lưu dữ liệu..."):
-        df.to_csv('dream_data.csv', index=False)
-        console.print(f"[green]✓[/green] Đã lưu: [cyan]dream_data.csv[/cyan]")
+        df.to_csv(DATA_DIR / 'dream_data.csv', index=False)
+        console.print(f"[green]✓[/green] Đã lưu: [cyan]data/dream_data.csv[/cyan]")
     
     console.print("\n")
     console.print(Panel.fit(
@@ -212,8 +219,8 @@ if __name__ == "__main__":
     }
     
     df_vn = df.rename(columns=FEATURE_MAPPING)
-    df_vn.to_csv('dream_data_vn.csv', index=False, encoding='utf-8-sig')
-    console.print(f"[green]✓[/green] Đã lưu phiên bản tiếng Việt: [cyan]dream_data_vn.csv[/cyan]")
+    df_vn.to_csv(DATA_DIR / 'dream_data_vn.csv', index=False, encoding='utf-8-sig')
+    console.print(f"[green]✓[/green] Đã lưu phiên bản tiếng Việt: [cyan]data/dream_data_vn.csv[/cyan]")
     
     # Footer
     console.print("\n")

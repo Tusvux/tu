@@ -7,6 +7,8 @@ Nguồn: https://www.kaggle.com/datasets/uom190346a/sleep-health-and-lifestyle-d
 import pandas as pd
 import numpy as np
 import os
+from pathlib import Path
+from paths import DATA_DIR, ensure_project_dirs
 
 def download_instructions():
     """Hướng dẫn tải dữ liệu"""
@@ -54,18 +56,21 @@ def download_instructions():
 
 def load_kaggle_dataset(filepath='sleep_health_lifestyle.csv'):
     """Tải và xử lý dữ liệu từ Kaggle"""
+    candidate = Path(filepath)
+    if not candidate.exists():
+        candidate = DATA_DIR / filepath
     
-    if not os.path.exists(filepath):
+    if not candidate.exists():
         print(f"\n❌ Không tìm thấy file: {filepath}")
         print("\n💡 Vui lòng tải dữ liệu theo hướng dẫn trên.")
         download_instructions()
         return None
     
-    print(f"\n✅ Đã tìm thấy file: {filepath}")
+    print(f"\n✅ Đã tìm thấy file: {candidate}")
     print("📂 Đang tải dữ liệu...")
     
     # Đọc dữ liệu
-    df = pd.read_csv(filepath)
+    df = pd.read_csv(candidate)
     
     print(f"\n📊 Thông tin dataset:")
     print(f"  - Số mẫu: {len(df)}")
@@ -156,6 +161,7 @@ def create_dream_labels(df):
     - Ác mộng (0): Stress cao, sleep quality thấp
     - Mơ đẹp (1): Stress thấp, sleep quality cao, exercise tốt
     - Ngủ sâu (2): Sleep duration đủ, sleep quality cao
+    - Không mơ (3): Các chỉ số gần trung bình, ít dấu hiệu nổi bật
     """
     
     labels = []
@@ -165,16 +171,27 @@ def create_dream_labels(df):
         sleep_quality = row['sleep_quality']
         sleep_hours = row['sleep_hours']
         exercise = row['exercise_minutes']
+        caffeine = row['caffeine_intake']
+        screen_time = row['screen_time']
         
         # Tính điểm cho mỗi loại
-        nightmare_score = (stress * 0.4) + ((10 - sleep_quality) * 0.4) + (row['screen_time'] * 0.2)
+        nightmare_score = (stress * 0.35) + ((10 - sleep_quality) * 0.25) + (screen_time * 0.20) + (caffeine * 0.20)
         
         good_dream_score = ((10 - stress) * 0.3) + (sleep_quality * 0.3) + (exercise / 120 * 10 * 0.4)
         
-        deep_sleep_score = (sleep_hours * 0.4) + (sleep_quality * 0.4) + ((5 - row['caffeine_intake']) * 0.2)
+        deep_sleep_score = (sleep_hours * 0.35) + (sleep_quality * 0.35) + ((5 - caffeine) * 0.20) + (exercise / 120 * 10 * 0.10)
+
+        no_dream_score = (
+            (10 - abs(sleep_hours - 7)) * 0.25 +
+            (10 - abs(stress - 5)) * 0.20 +
+            (5 - abs(caffeine - 2)) * 0.15 +
+            ((120 - exercise) / 120 * 10) * 0.20 +
+            ((8 - screen_time) / 8 * 10) * 0.10 -
+            abs(sleep_quality - 5) * 0.10
+        )
         
         # Chọn nhãn có điểm cao nhất
-        scores = [nightmare_score, good_dream_score, deep_sleep_score]
+        scores = [nightmare_score, good_dream_score, deep_sleep_score, no_dream_score]
         label = scores.index(max(scores))
         labels.append(label)
     
@@ -182,6 +199,7 @@ def create_dream_labels(df):
 
 def main():
     """Hàm chính"""
+    ensure_project_dirs()
     
     print("=" * 70)
     print("🌙 TẢI VÀ XỬ LÝ DỮ LIỆU THẬT VỀ GIẤC NGỦ 🌙")
@@ -206,7 +224,7 @@ def main():
         ]
         
         for filename in alternative_files:
-            if os.path.exists(filename):
+            if os.path.exists(filename) or (DATA_DIR / filename).exists():
                 df = load_kaggle_dataset(filename)
                 break
     
@@ -215,13 +233,13 @@ def main():
         processed_df = process_real_data(df)
         
         # Lưu dữ liệu đã xử lý
-        output_file = 'dream_data_real.csv'
+        output_file = DATA_DIR / 'dream_data_real.csv'
         processed_df.to_csv(output_file, index=False)
         
-        print(f"\n💾 Đã lưu dữ liệu đã xử lý: {output_file}")
+        print(f"\n💾 Đã lưu dữ liệu đã xử lý: data/{output_file.name}")
         
         # Thống kê
-        dream_labels = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu'}
+        dream_labels = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu', 3: 'Không mơ'}
         print("\n📊 PHÂN BỐ NHÃN:")
         print("=" * 70)
         for dream_type, count in processed_df['dream_type'].value_counts().sort_index().items():
@@ -235,7 +253,7 @@ def main():
         print("\n✅ HOÀN THÀNH!")
         print("=" * 70)
         print("\n💡 Bước tiếp theo:")
-        print("  1. Chạy: python train_model.py")
+        print("  1. Chạy: python src/train_model_vn.py")
         print("     (Script sẽ tự động sử dụng dream_data_real.csv nếu có)")
         print("  2. So sánh kết quả với dữ liệu giả định")
         

@@ -1,4 +1,4 @@
-# HỆ THỐNG DỰ ĐOÁN GIẤC MƠ - 4 LOẠI
+﻿# HỆ THỐNG DỰ ĐOÁN GIẤC MƠ - 4 LOẠI
 
 ## 📋 Tổng Quan
 
@@ -50,7 +50,7 @@ Không mơ: 38.1% (2284 mẫu)
 ### 1. Tạo dữ liệu mới (6000 mẫu với 4 loại)
 
 ```bash
-python generate_data_4_classes.py
+python src/generate_data_4_classes.py
 ```
 
 Tạo ra 2 file:
@@ -60,7 +60,7 @@ Tạo ra 2 file:
 ### 2. Huấn luyện mô hình đầy đủ
 
 ```bash
-python train_model_vn.py
+python src/train_model_vn.py
 ```
 
 Tạo ra:
@@ -72,7 +72,7 @@ Tạo ra:
 ### 3. Test nhanh
 
 ```bash
-python test_4_classes.py
+python tests/test_4_classes.py
 ```
 
 Kiểm tra nhanh độ chính xác của mô hình với Random Forest.
@@ -80,7 +80,7 @@ Kiểm tra nhanh độ chính xác của mô hình với Random Forest.
 ### 4. Dự đoán với dữ liệu mới
 
 ```bash
-python predict_vn.py
+python src/predict_vn.py
 ```
 
 Nhập thông tin cá nhân và nhận dự đoán loại giấc mơ.
@@ -200,3 +200,4 @@ MIT License - Tự do sử dụng và chỉnh sửa
 **Phiên bản**: 2.0 (4 Loại Giấc Mơ)  
 **Ngày cập nhật**: December 22, 2025  
 **Tác giả**: Dream Prediction Team
+

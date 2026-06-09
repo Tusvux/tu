@@ -9,12 +9,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+import sys
+import os
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier, BaggingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier, BaggingClassifier, AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, roc_auc_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, roc_auc_score, log_loss
 from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
 from sklearn.decomposition import PCA
 from rich.console import Console
@@ -22,6 +28,11 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn
 from rich import box
+from paths import DATA_DIR, FIGURES_DIR, MODELS_DIR, ensure_project_dirs
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 console = Console()
 
@@ -53,6 +64,11 @@ FEATURE_NAMES_VN = {
 
 DREAM_LABELS = {0: 'Ác mộng', 1: 'Mơ đẹp', 2: 'Ngủ sâu', 3: 'Không mơ'}
 
+def get_present_labels(*arrays):
+    """Lấy danh sách nhãn có mặt trong dữ liệu theo đúng mapping hiện tại."""
+    labels = sorted(set(np.concatenate([np.asarray(array) for array in arrays]).astype(int)))
+    return labels, [DREAM_LABELS.get(label, f"Không xác định ({label})") for label in labels]
+
 def load_and_convert_data_to_vietnamese():
     """Tải và chuyển đổi dữ liệu sang tiếng Việt"""
     
@@ -63,20 +79,22 @@ def load_and_convert_data_to_vietnamese():
         box=box.DOUBLE
     ))
     
+    data_file = DATA_DIR / 'dream_data_real.csv' if (DATA_DIR / 'dream_data_real.csv').exists() else DATA_DIR / 'dream_data.csv'
+
     try:
-        df = pd.read_csv('dream_data.csv')
-        console.print(f"[green]✓[/green] Đã tải file: [cyan]dream_data.csv[/cyan]")
+        df = pd.read_csv(data_file)
+        console.print(f"[green]✓[/green] Đã tải file: [cyan]{data_file.name}[/cyan]")
     except FileNotFoundError:
-        console.print("[red]✗[/red] Không tìm thấy file dream_data.csv")
-        console.print("[yellow]💡 Hãy chạy generate_data.py trước![/yellow]")
+        console.print("[red]✗[/red] Không tìm thấy file dream_data.csv hoặc dream_data_real.csv")
+        console.print("[yellow]💡 Hãy chạy generate_data_4_classes.py hoặc load_real_data.py trước![/yellow]")
         exit(1)
     
     # Chuyển đổi tên cột
     df_vn = df.rename(columns=FEATURE_MAPPING)
     
     # Lưu file tiếng Việt
-    df_vn.to_csv('dream_data_vn.csv', index=False, encoding='utf-8-sig')
-    console.print(f"[green]✓[/green] Đã lưu file tiếng Việt: [cyan]dream_data_vn.csv[/cyan]")
+    df_vn.to_csv(DATA_DIR / 'dream_data_vn.csv', index=False, encoding='utf-8-sig')
+    console.print(f"[green]✓[/green] Đã lưu file huấn luyện tiếng Việt: [cyan]data/dream_data_vn.csv[/cyan]")
     
     return df_vn
 
@@ -123,7 +141,7 @@ def analyze_data_statistics(df):
     plt.yticks(range(len(labels)), labels, rotation=0)
     
     plt.tight_layout()
-    plt.savefig('ma_tran_tuong_quan.png', dpi=300, bbox_inches='tight')
+    plt.savefig(FIGURES_DIR / 'ma_tran_tuong_quan.png', dpi=300, bbox_inches='tight')
     console.print(f"[green]✓[/green] Đã lưu ma trận tương quan: [cyan]ma_tran_tuong_quan.png[/cyan]")
     plt.close()
 
@@ -153,7 +171,7 @@ def plot_distribution_histograms(df):
     plt.legend(fontsize=10)
     
     plt.tight_layout()
-    plt.savefig('hinh_4_1_phan_bo_do_tuoi.png', dpi=300, bbox_inches='tight')
+    plt.savefig(FIGURES_DIR / 'hinh_4_1_phan_bo_do_tuoi.png', dpi=300, bbox_inches='tight')
     console.print(f"[green]✓[/green] Đã lưu: [cyan]hinh_4_1_phan_bo_do_tuoi.png[/cyan]")
     plt.close()
     
@@ -174,7 +192,7 @@ def plot_distribution_histograms(df):
     plt.legend(fontsize=10)
     
     plt.tight_layout()
-    plt.savefig('hinh_4_2_phan_bo_thoi_luong_ngu.png', dpi=300, bbox_inches='tight')
+    plt.savefig(FIGURES_DIR / 'hinh_4_2_phan_bo_thoi_luong_ngu.png', dpi=300, bbox_inches='tight')
     console.print(f"[green]✓[/green] Đã lưu: [cyan]hinh_4_2_phan_bo_thoi_luong_ngu.png[/cyan]")
     plt.close()
     
@@ -269,27 +287,28 @@ def plot_gradient_boosting_analysis(model, X_train, y_train, X_test, y_test, fea
     axes[0, 1].set_ylim([0.5, 1.0])
     
     # Subplot 3: Confusion Matrix
-    cm = confusion_matrix(y_test, y_test_pred)
+    present_labels, present_label_names = get_present_labels(y_test, y_test_pred)
+    cm = confusion_matrix(y_test, y_test_pred, labels=present_labels)
     cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     
     sns.heatmap(cm_normalized, annot=True, fmt='.2%', cmap='Blues', 
                 cbar_kws={'label': 'Tỷ lệ'}, ax=axes[1, 0],
-                xticklabels=list(DREAM_LABELS.values()),
-                yticklabels=list(DREAM_LABELS.values()),
+                xticklabels=present_label_names,
+                yticklabels=present_label_names,
                 linewidths=1, linecolor='white', square=True)
     axes[1, 0].set_xlabel('Nhãn dự đoán', fontsize=11, fontweight='bold')
     axes[1, 0].set_ylabel('Nhãn thực tế', fontsize=11, fontweight='bold')
     axes[1, 0].set_title('Hình 4.3c: Ma trận nhầm lẫn\nGradient Boosting', 
                         fontsize=12, fontweight='bold', pad=15)
     
-    # Subplot 4: Deviance (Loss) curve
-    train_deviance = np.zeros((model.n_estimators,), dtype=np.float64)
-    for i, y_pred in enumerate(model.staged_decision_function(X_train)):
-        train_deviance[i] = model.loss_(y_train, y_pred)
+    # Subplot 4: Loss curve
+    train_deviance = []
+    for y_proba in model.staged_predict_proba(X_train):
+        train_deviance.append(log_loss(y_train, y_proba, labels=model.classes_))
     
-    test_deviance = np.zeros((model.n_estimators,), dtype=np.float64)
-    for i, y_pred in enumerate(model.staged_decision_function(X_test)):
-        test_deviance[i] = model.loss_(y_test, y_pred)
+    test_deviance = []
+    for y_proba in model.staged_predict_proba(X_test):
+        test_deviance.append(log_loss(y_test, y_proba, labels=model.classes_))
     
     axes[1, 1].plot(iterations, train_deviance, label='Tập huấn luyện', 
                    color='#1976D2', linewidth=2.5, alpha=0.8)
@@ -305,7 +324,7 @@ def plot_gradient_boosting_analysis(model, X_train, y_train, X_test, y_test, fea
     plt.suptitle('Hình 4.3: Phân tích chi tiết thuật toán Gradient Boosting', 
                 fontsize=16, fontweight='bold', y=0.995)
     plt.tight_layout(rect=[0, 0, 1, 0.99])
-    plt.savefig('hinh_4_3_gradient_boosting_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(FIGURES_DIR / 'hinh_4_3_gradient_boosting_analysis.png', dpi=300, bbox_inches='tight')
     console.print(f"[green]✓[/green] Đã lưu: [cyan]hinh_4_3_gradient_boosting_analysis.png[/cyan]")
     plt.close()
 
@@ -386,13 +405,14 @@ def plot_neural_network_analysis(model, X_train, y_train, X_test, y_test, featur
     
     # Subplot 3: Confusion Matrix
     y_pred_nn = mlp_detailed.predict(X_test)
-    cm_nn = confusion_matrix(y_test, y_pred_nn)
+    present_labels, present_label_names = get_present_labels(y_test, y_pred_nn)
+    cm_nn = confusion_matrix(y_test, y_pred_nn, labels=present_labels)
     cm_nn_normalized = cm_nn.astype('float') / cm_nn.sum(axis=1)[:, np.newaxis]
     
     sns.heatmap(cm_nn_normalized, annot=True, fmt='.2%', cmap='Purples', 
                 cbar_kws={'label': 'Tỷ lệ'}, ax=axes[1, 0],
-                xticklabels=list(DREAM_LABELS.values()),
-                yticklabels=list(DREAM_LABELS.values()),
+                xticklabels=present_label_names,
+                yticklabels=present_label_names,
                 linewidths=1, linecolor='white', square=True)
     axes[1, 0].set_xlabel('Nhãn dự đoán', fontsize=11, fontweight='bold')
     axes[1, 0].set_ylabel('Nhãn thực tế', fontsize=11, fontweight='bold')
@@ -451,7 +471,7 @@ def plot_neural_network_analysis(model, X_train, y_train, X_test, y_test, featur
     plt.suptitle('Hình 4.4: Phân tích chi tiết thuật toán Neural Network (MLP)', 
                 fontsize=16, fontweight='bold', y=0.995)
     plt.tight_layout(rect=[0, 0, 1, 0.99])
-    plt.savefig('hinh_4_4_neural_network_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(FIGURES_DIR / 'hinh_4_4_neural_network_analysis.png', dpi=300, bbox_inches='tight')
     console.print(f"[green]✓[/green] Đã lưu: [cyan]hinh_4_4_neural_network_analysis.png[/cyan]")
     plt.close()
 
@@ -468,8 +488,13 @@ def train_simple_models(X_train, y_train, X_test, y_test):
     models = {
         'Random Forest': RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42),
         'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=42),
+        'Decision Tree': DecisionTreeClassifier(max_depth=10, random_state=42),
         'SVM (RBF Kernel)': SVC(probability=True, C=10, gamma='scale', kernel='rbf', random_state=42),
-        'Neural Network (MLP)': MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=1000, random_state=42, early_stopping=True)
+        'K-Nearest Neighbors': KNeighborsClassifier(n_neighbors=7),
+        'Naive Bayes': GaussianNB(),
+        'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
+        'Neural Network (MLP)': MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=1000, random_state=42, early_stopping=True),
+        'AdaBoost': AdaBoostClassifier(n_estimators=100, random_state=42)
     }
     
     trained_models = {}
@@ -648,7 +673,7 @@ def create_comparison_table(trained_models):
              ha='center', fontsize=9, style='italic', color='gray', wrap=True)
     
     plt.tight_layout()
-    plt.savefig('bang_4_1_so_sanh_thuat_toan.png', dpi=300, bbox_inches='tight', facecolor='white')
+    plt.savefig(FIGURES_DIR / 'bang_4_1_so_sanh_thuat_toan.png', dpi=300, bbox_inches='tight', facecolor='white')
     console.print(f"[green]✓[/green] Đã lưu: [cyan]bang_4_1_so_sanh_thuat_toan.png[/cyan]")
     plt.close()
     
@@ -717,12 +742,13 @@ def create_comparison_table(trained_models):
     ax.set_ylim([0, 105])
     
     plt.tight_layout()
-    plt.savefig('bieu_do_so_sanh_thuat_toan.png', dpi=300, bbox_inches='tight')
+    plt.savefig(FIGURES_DIR / 'bieu_do_so_sanh_thuat_toan.png', dpi=300, bbox_inches='tight')
     console.print(f"[green]✓[/green] Đã lưu: [cyan]bieu_do_so_sanh_thuat_toan.png[/cyan]")
     plt.close()
 
 def main():
     """Hàm chính"""
+    ensure_project_dirs()
     
     # Header
     console.print("\n")
@@ -835,9 +861,15 @@ def main():
         border_style="cyan"
     ))
     
-    report = classification_report(y_test, y_pred,
-                                   target_names=list(DREAM_LABELS.values()),
-                                   output_dict=True)
+    present_labels, present_label_names = get_present_labels(y_test, y_pred)
+    report = classification_report(
+        y_test,
+        y_pred,
+        labels=present_labels,
+        target_names=present_label_names,
+        output_dict=True,
+        zero_division=0
+    )
     
     report_table = Table(box=box.ROUNDED)
     report_table.add_column("Lớp", style="cyan")
@@ -846,7 +878,7 @@ def main():
     report_table.add_column("F1-Score", justify="right", style="magenta")
     report_table.add_column("Support", justify="right", style="blue")
     
-    for label_name in DREAM_LABELS.values():
+    for label_name in present_label_names:
         report_table.add_row(
             label_name,
             f"{report[label_name]['precision']:.4f}",
@@ -860,14 +892,14 @@ def main():
     # 9. Lưu mô hình
     console.print("\n")
     with console.status("[bold cyan]Đang lưu mô hình..."):
-        joblib.dump(best_model, 'mo_hinh_tot_nhat_vn.pkl')
-        joblib.dump(scaler, 'scaler_vn.pkl')
-        joblib.dump(list(X.columns), 'ten_dac_trung_vn.pkl')
+        joblib.dump(best_model, MODELS_DIR / 'mo_hinh_tot_nhat_vn.pkl')
+        joblib.dump(scaler, MODELS_DIR / 'scaler_vn.pkl')
+        joblib.dump(list(X.columns), MODELS_DIR / 'ten_dac_trung_vn.pkl')
     
     console.print(Panel(
-        f"[bold green]✓ Mô hình đã được lưu:[/bold green] [cyan]mo_hinh_tot_nhat_vn.pkl[/cyan]\n"
-        f"[bold green]✓ Scaler đã được lưu:[/bold green] [cyan]scaler_vn.pkl[/cyan]\n"
-        f"[bold green]✓ Tên đặc trưng đã được lưu:[/bold green] [cyan]ten_dac_trung_vn.pkl[/cyan]",
+        f"[bold green]✓ Mô hình đã được lưu:[/bold green] [cyan]models/mo_hinh_tot_nhat_vn.pkl[/cyan]\n"
+        f"[bold green]✓ Scaler đã được lưu:[/bold green] [cyan]models/scaler_vn.pkl[/cyan]\n"
+        f"[bold green]✓ Tên đặc trưng đã được lưu:[/bold green] [cyan]models/ten_dac_trung_vn.pkl[/cyan]",
         border_style="green"
     ))
     

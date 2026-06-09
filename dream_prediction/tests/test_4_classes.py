@@ -4,17 +4,30 @@ Script test nhanh để kiểm tra dữ liệu 4 loại giấc mơ
 
 import pandas as pd
 import numpy as np
+import sys
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from paths import DATA_DIR
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # Đọc dữ liệu
 print("=" * 60)
 print("KIỂM TRA DỮ LIỆU 4 LOẠI GIẤC MƠ")
 print("=" * 60)
 
-df = pd.read_csv('dream_data_vn.csv')
+df = pd.read_csv(DATA_DIR / 'dream_data_vn.csv')
 
 print(f"\n✓ Đã tải dữ liệu: {len(df)} mẫu")
 print(f"✓ Số đặc trưng: {len(df.columns) - 1}")

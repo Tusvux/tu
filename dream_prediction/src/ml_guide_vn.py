@@ -1,4 +1,4 @@
-"""
+﻿"""
 So sánh các phương pháp Machine Learning - TIẾNG VIỆT
 Phân tích chi tiết ưu nhược điểm của từng thuật toán
 """
@@ -45,7 +45,7 @@ def create_ml_comparison_guide():
     algorithms = [
         ("Random Forest", "Ensemble", "Cao (75-77%)", "Trung bình", "Tốt"),
         ("Gradient Boosting", "Ensemble", "Cao (75-77%)", "Chậm", "Trung bình"),
-        ("SVM (RBF)", "Kernel", "Rất cao (76-78%)", "Chậm", "Khó"),
+        ("Neural Network (MLP)", "Neural network", "Rất cao (~94%)", "Trung bình", "Khó"),
         ("Logistic Regression", "Linear", "Trung bình (70-72%)", "Rất nhanh", "Rất tốt"),
         ("Neural Network", "Deep Learning", "Trung bình (70-72%)", "Chậm", "Khó"),
         ("K-Nearest Neighbors", "Instance-based", "Thấp (65-70%)", "Rất chậm", "Tốt"),
