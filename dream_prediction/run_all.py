@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-MASTER SCRIPT - Chạy toàn bộ quy trình dự đoán giấc mơ
-Từ tạo dữ liệu → huấn luyện → dự đoán
-"""
-
 import subprocess
 import sys
 import os

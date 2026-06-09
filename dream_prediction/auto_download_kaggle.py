@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""
-Script tự động tải dữ liệu từ Kaggle với setup hướng dẫn
-"""
+
+dream_counts = df['loai_giac_mo'].value_counts()
+print("\n--- PHÂN BỐ NHÃN (LABEL DISTRIBUTION) ---")
+print(dream_counts)
+
+percentage = (dream_counts / len(df)) * 100
+print(percentage)
 
 import os
 import sys
